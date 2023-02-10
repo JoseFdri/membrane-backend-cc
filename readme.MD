@@ -21,6 +21,10 @@ ThiS API connects with [Bitfinex API](https://docs.bitfinex.com/reference/ws-pub
 
 `GET <host>/api/order/:pairName`
 
+Example: 
+```
+curl --location --request GET 'localhost:3000/api/order/tBTCUSD'
+```
 Response:
 
 ```
@@ -46,6 +50,17 @@ Response:
 
 `POST <host>/api/order`
 
+Example:
+```
+curl --location --request POST 'localhost:3000/api/order' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "tETHUSD",
+    "operation": "sell",
+    "amount": "5",
+    "priceLimit": 7000
+}'
+```
 Payload:
 ```
 {
