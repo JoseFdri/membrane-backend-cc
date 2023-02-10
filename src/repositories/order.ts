@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { websocket, ORDER_BOOKS, CHANNELS_MAP } from '../config'
 import { MarketDepthParams, TipType } from '../types'
+import { ERROR_SYMBOL_INVALID } from '../constants'
 
 const subscribeToEvent = ({
   channel, symbol
@@ -25,25 +26,39 @@ const unsubscribeToEvent = ({
   websocket?.send(msg)
 }
 
-export const getSymbolSnapshot = async (pairName: string): Promise<number[][]> => {
+export const getSymbolSnapshot = async (pairName: string): Promise<number[][] | Error> => {
   subscribeToEvent({ channel: 'book', symbol: pairName })
   const timeOut = 3000
 
   return await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+      reject(new Error('timeout'))
+    }, timeOut);
+
     const interval = setInterval(() => {
-      const channelId = CHANNELS_MAP[pairName]
+      const channelId = CHANNELS_MAP[pairName]?.chanId
       const snapshot = ORDER_BOOKS[channelId]?.snapshot
+      const error = CHANNELS_MAP[pairName]?.error;
+      if(error && error === ERROR_SYMBOL_INVALID) {
+        clearInterval(interval)
+        clearTimeout(timeout)
+        resolve(Error(error));
+      } else if(error){
+        clearInterval(interval)
+        clearTimeout(timeout)
+        reject(new Error(error))
+      }
+
       if (channelId && snapshot) {
-        resolve(snapshot)
         unsubscribeToEvent({ chanId: channelId })
         clearInterval(interval)
+        clearTimeout(timeout)
+        resolve(snapshot)
       }
     }, 100)
 
-    setTimeout(() => {
-      clearInterval(interval)
-      reject(new Error('timeout'))
-    }, timeOut)
+    
   })
 }
 
@@ -126,8 +141,11 @@ export const getDepthStats = async ({ name, amount, operation, priceLimit }: Mar
   depth: string
   totalPrice: string
   totalCount: number
-}> => {
+} | Error> => {
   const snapshot = await getSymbolSnapshot(name)
+  if(snapshot instanceof Error) {
+    return snapshot;
+  }
   const { bids, asks } = buildBidAsk(snapshot)
   const listMap = {
     sell: bids,

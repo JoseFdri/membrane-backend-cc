@@ -19,6 +19,20 @@ class Websocket extends EventEmitter {
         chanId: orderBookMock[0]
       }))
     }
+    if(payload.event === 'subscribe' && symbol === 'tETHUSDINVALIDA') {
+      this.emit('message', JSON.stringify({
+        event: 'error',
+        msg: 'symbol: invalid',
+        symbol,
+      }))
+    }
+    if(payload.event === 'subscribe' && symbol === 'tETHUSDINVALIDB') {
+      this.emit('message', JSON.stringify({
+        event: 'error',
+        msg: 'secret error',
+        symbol,
+      }))
+    }
   }
 };
 

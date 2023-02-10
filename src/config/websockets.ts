@@ -1,5 +1,6 @@
 import Ws, { WebSocket } from 'ws'
 import { env } from './'
+import { logger } from '../libs'
 
 export let websocket: WebSocket | null
 
@@ -28,12 +29,31 @@ export const handleMessages = (): void => {
   websocket?.on('message', (buffer: string) => {
     const msg = JSON.parse(buffer.toString())
 
+    if (msg.event === 'error') {
+      CHANNELS_MAP[msg.symbol] = {
+        error: msg.msg
+      }
+    }
+
     if (msg.event === 'subscribed') {
       ORDER_BOOKS[msg.chanId] = {
         snapshot: [],
         symbol: msg.symbol
       }
-      CHANNELS_MAP[msg.symbol] = msg.chanId
+      CHANNELS_MAP[msg.symbol] = {
+        chanId: msg.chanId,
+        error: null,
+      }
+    }
+
+    if (msg.event === 'subscribed') {
+      ORDER_BOOKS[msg.chanId] = {
+        snapshot: [],
+        symbol: msg.symbol
+      }
+      CHANNELS_MAP[msg.symbol] = {
+        chanId:  msg.chanId
+      }
     }
 
     if (msg.event === 'unsubscribed') {

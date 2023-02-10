@@ -60,6 +60,28 @@ describe('Test order controller', () => {
         .get(`/api/order/${pairName}`)
         .expect(500)
     })
+
+    it('Should return symbol error', async () => {
+      const pairName = 'tETHUSDINVALIDA'
+      handleMessages()
+
+      const result = await request(app)
+        .get(`/api/order/${pairName}`)
+        .expect(400)
+
+      expect(result._body).toMatchObject({
+        error: 'symbol: invalid'
+      })
+    })
+
+    it('Should return generic error due error from websocket', async () => {
+      const pairName = 'tETHUSDINVALIDB'
+      handleMessages()
+
+      const result = await request(app)
+        .get(`/api/order/${pairName}`)
+        .expect(500)
+    })
   })
 
   describe('Test post order endpoint', () => {
@@ -135,6 +157,23 @@ describe('Test order controller', () => {
           priceLimit: '10s'
         })
       expect(result.statusCode).toBe(400)
+    })
+
+    it('Should return error due invalid pair name', async () => {
+      handleMessages()
+
+      const result = await request(app)
+        .post('/api/order/')
+        .send({
+          name: 'tETHUSDINVALIDA',
+          operation: 'sell',
+          amount: 5,
+          priceLimit: 0
+        })
+      expect(result.statusCode).toBe(400)
+      expect(result._body).toMatchObject({
+        error: 'symbol: invalid'
+      })
     })
 
     it('Should return http 400 error due missing parameter', async () => {

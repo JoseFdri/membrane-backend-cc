@@ -13,6 +13,9 @@ export const getOrderBooks = async (req: Request): Promise<HttpResponse> => {
       return badRequest(new Error('Invalid pair name'))
     }
     const snapshot = await getSymbolSnapshot(pairName)
+    if(snapshot instanceof Error) {
+      return badRequest(snapshot);
+    }
     const bidAsks = buildBidAsk(snapshot)
 
     return ok(bidAsks)
@@ -29,6 +32,9 @@ export const postOrder = async (req: Request): Promise<HttpResponse> => {
   }
   try {
     const response = await getDepthStats({ name, operation, amount, priceLimit })
+    if(response instanceof Error) {
+      return badRequest(response)
+    }
     if (response.totalCount < amount && !priceLimit) {
       return badRequest(new Error('There is not enough orders'))
     }

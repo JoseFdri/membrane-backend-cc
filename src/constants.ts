@@ -1,0 +1,1 @@
+export const ERROR_SYMBOL_INVALID = 'symbol: invalid'
