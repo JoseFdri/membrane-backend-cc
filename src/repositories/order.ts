@@ -29,8 +29,12 @@ const unsubscribeToEvent = ({
 export const getSymbolSnapshot = async (pairName: string): Promise<number[][] | Error> => {
   subscribeToEvent({ channel: 'book', symbol: pairName })
   const timeOut = 3000
-
+  
   return await new Promise((resolve, reject) => {
+    const clearTimers = () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    }
     const timeout = setTimeout(() => {
       clearInterval(interval)
       reject(new Error('timeout'))
@@ -41,19 +45,16 @@ export const getSymbolSnapshot = async (pairName: string): Promise<number[][] | 
       const snapshot = ORDER_BOOKS[channelId]?.snapshot
       const error = CHANNELS_MAP[pairName]?.error;
       if(error && error === ERROR_SYMBOL_INVALID) {
-        clearInterval(interval)
-        clearTimeout(timeout)
+        clearTimers();
         resolve(Error(error));
       } else if(error){
-        clearInterval(interval)
-        clearTimeout(timeout)
+        clearTimers();
         reject(new Error(error))
       }
 
       if (channelId && snapshot) {
         unsubscribeToEvent({ chanId: channelId })
-        clearInterval(interval)
-        clearTimeout(timeout)
+        clearTimers();
         resolve(snapshot)
       }
     }, 100)
